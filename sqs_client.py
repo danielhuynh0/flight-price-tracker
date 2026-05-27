@@ -11,7 +11,6 @@ def _sqs():
         _client = boto3.client("sqs", region_name=config.AWS_REGION)
     return _client
 
-
 def publish(queue_url: str, message: dict) -> None:
     _sqs().send_message(
         QueueUrl=queue_url,
@@ -26,7 +25,6 @@ def consume(queue_url: str, max_messages: int = 10, wait_seconds: int = 20) -> l
         WaitTimeSeconds=wait_seconds,
     )
     return response.get("Messages", [])
-
 
 def delete(queue_url: str, receipt_handle: str) -> None:
     _sqs().delete_message(

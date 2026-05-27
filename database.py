@@ -11,21 +11,17 @@ import config
 
 _resource = None
 
-
 def _dynamo():
     global _resource
     if _resource is None:
         _resource = boto3.resource("dynamodb", region_name=config.AWS_REGION)
     return _resource
 
-
 def _monitoring_table():
     return _dynamo().Table(config.DYNAMO_MONITORING_TABLE)
 
-
 def _price_history_table():
     return _dynamo().Table(config.DYNAMO_PRICE_HISTORY_TABLE)
-
 
 def _notification_table():
     return _dynamo().Table(config.DYNAMO_NOTIFICATION_TABLE)
@@ -33,10 +29,8 @@ def _notification_table():
 def _dec(value: float) -> Decimal:
     return Decimal(str(value))
 
-
 def _float(value) -> float:
     return float(value)
-
 
 # Tables:
 #   monitoring_requests  - PK: user_id (S),  SK: request_id (S)

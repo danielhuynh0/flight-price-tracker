@@ -19,3 +19,10 @@ DYNAMO_PRICE_HISTORY_TABLE  = os.getenv("DYNAMO_PRICE_HISTORY_TABLE", "price_his
 DYNAMO_NOTIFICATION_TABLE   = os.getenv("DYNAMO_NOTIFICATION_TABLE",  "notification_history")
 
 NOTIFICATION_COOLDOWN_HOURS = int(os.getenv("NOTIFICATION_COOLDOWN_HOURS", "24"))
+
+# SMTP for email delivery
+SMTP_HOST     = os.getenv("SMTP_HOST",     "smtp.gmail.com")
+SMTP_PORT     = int(os.getenv("SMTP_PORT", "465"))
+SMTP_USER     = os.getenv("SMTP_USER",     "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+SMTP_FROM     = os.getenv("SMTP_FROM",     "") or os.getenv("SMTP_USER", "")

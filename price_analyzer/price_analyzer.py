@@ -6,7 +6,6 @@ import config
 import database as db
 import sqs_client
 
-
 def process_message(body: dict) -> None:
     user_id     = body["user_id"]
     origin      = body["origin"]
@@ -33,7 +32,7 @@ def process_message(body: dict) -> None:
         print(f"[Price Analyzer] Above threshold - no alert.")
         return
 
-    # enforce cooldown, don't re-alert same user on same route too often
+    # cooldown
     last_sent = db.get_last_notification_time(user_id, route_key)
     if last_sent is not None:
         cooldown = timedelta(hours=config.NOTIFICATION_COOLDOWN_HOURS)
@@ -60,9 +59,8 @@ def process_message(body: dict) -> None:
         f"for {user_id} ({contact})"
     )
 
-
 def run_loop() -> None:
-    print("[Price Analyzer] Analyzer service started (long-polling Price Events Queue). Press Ctrl+C to stop.")
+    print("[Price Analyzer] Analyzer service started (long-polling Price Events Queue).")
     while True:
         try:
             messages = sqs_client.consume(config.PRICE_EVENTS_QUEUE_URL)

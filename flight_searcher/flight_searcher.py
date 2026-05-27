@@ -5,10 +5,8 @@ import database as db
 import sqs_client
 from flight_searcher.flight_scraper import FlightResult, search_flights
 
-
 def _make_route_key(user_id: str, origin: str, destination: str, date: str) -> str:
     return f"{user_id}:{origin}:{destination}:{date}"
-
 
 def _build_price_event(request: db.MonitoringRequest, flights: list[FlightResult]) -> dict:
     return {
@@ -33,7 +31,6 @@ def _build_price_event(request: db.MonitoringRequest, flights: list[FlightResult
         ],
     }
 
-
 def scrape_and_publish(request: db.MonitoringRequest) -> None:
     flights = search_flights(
         origin=request.origin,
@@ -57,7 +54,6 @@ def scrape_and_publish(request: db.MonitoringRequest) -> None:
         f"published to queue"
     )
 
-
 def run_once() -> None:
     requests = db.get_active_monitoring_requests()
     print(f"[Flight Searcher] Processing {len(requests)} active monitoring request(s)...")
@@ -67,9 +63,8 @@ def run_once() -> None:
         except Exception as e:
             print(f"[Flight Searcher] Error on request {request.id} ({request.origin} to {request.destination}): {e}")
 
-
 def run_loop(interval_seconds: int = config.POLL_INTERVAL_SECONDS) -> None:
-    print(f"[Flight Searcher] Ingestion service started (interval: {interval_seconds}s). Press Ctrl+C to stop.")
+    print(f"[Flight Searcher] Ingestion service started (interval: {interval_seconds}s).")
     while True:
         try:
             run_once()
