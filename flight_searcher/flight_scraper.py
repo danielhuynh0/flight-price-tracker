@@ -5,7 +5,7 @@ from datetime import datetime
 
 from fast_flights import FlightData, Passengers, get_flights
 
-
+# for use to access data from list of obtained flights
 @dataclass
 class FlightResult:
     airline: str
@@ -62,12 +62,12 @@ def search_flights(
         ))
     return flights
 
-
+# a fancy way of formatting the output
 def format_flight(f: FlightResult) -> str:
     stop_label = "nonstop" if f.stops == 0 else f"{f.stops} stop(s)"
     best = " [BEST]" if f.is_best else ""
     return (
-        f"  {f.airline:<32} | {f.departure:<30} → {f.arrival:<30} "
+        f"  {f.airline:<32} | {f.departure:<30} -> {f.arrival:<30} "
         f"| {f.duration:<12} | {stop_label:<12} | ${f.price:.2f}{best}"
     )
 
@@ -136,9 +136,9 @@ if __name__ == "__main__":
     THRESHOLD     = 500.00
     ADULTS        = 1
     SEAT          = "economy" # economy | premium-economy | business | first
-    POLL_INTERVAL = 300 # seconds between checks (5 min)
+    POLL_INTERVAL = 300 # seconds between checks (default I set here is 5 min)
 
     flights = check_prices(ORIGIN, DESTINATION, TRAVEL_DATE, THRESHOLD, ADULTS, SEAT)
 
-    # Uncomment to poll continuously:
+    # Uncomment to poll continuously (for the actual service):
     # poll(ORIGIN, DESTINATION, TRAVEL_DATE, THRESHOLD, ADULTS, SEAT, POLL_INTERVAL)

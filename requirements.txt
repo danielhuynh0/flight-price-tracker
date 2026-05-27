@@ -1,1 +1,3 @@
 fast-flights
+boto3
+python-dotenv
