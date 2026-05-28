@@ -20,6 +20,10 @@ DYNAMO_NOTIFICATION_TABLE   = os.getenv("DYNAMO_NOTIFICATION_TABLE",  "notificat
 
 NOTIFICATION_COOLDOWN_HOURS = int(os.getenv("NOTIFICATION_COOLDOWN_HOURS", "24"))
 
+# Flask frontend
+FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "change-me-in-production")
+FLASK_PORT       = int(os.getenv("FLASK_PORT", "5000"))
+
 # SMTP for email delivery
 SMTP_HOST     = os.getenv("SMTP_HOST",     "smtp.gmail.com")
 SMTP_PORT     = int(os.getenv("SMTP_PORT", "465"))

@@ -143,6 +143,28 @@ def get_active_monitoring_requests() -> list[MonitoringRequest]:
     ]
 
 
+def get_user_monitoring_requests(user_id: str) -> list[MonitoringRequest]:
+    """Return all active monitoring requests for a specific user."""
+    response = _monitoring_table().query(
+        KeyConditionExpression=Key("user_id").eq(user_id),
+        FilterExpression=Attr("active").eq(True),
+    )
+    return [
+        MonitoringRequest(
+            id=item["request_id"],
+            user_id=item["user_id"],
+            origin=item["origin"],
+            destination=item["destination"],
+            travel_date=item["travel_date"],
+            threshold=_float(item["threshold"]),
+            contact=item["contact"],
+            seat=item["seat"],
+            adults=int(item["adults"]),
+        )
+        for item in response.get("Items", [])
+    ]
+
+
 def deactivate_monitoring_request(user_id: str, request_id: str) -> None:
     _monitoring_table().update_item(
         Key={"user_id": user_id, "request_id": request_id},

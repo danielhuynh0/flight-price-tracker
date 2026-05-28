@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Monitor a Route — Flight Tracker{% endblock %}
+
+{% block content %}
+<h1>Monitor a Flight Route</h1>
+<h2>Get alerted when the price drops below your threshold.</h2>
+
+<div class="card">
+  <form action="/submit" method="POST">
+
+    <label for="user_id">Your name or ID</label>
+    <input type="text" id="user_id" name="user_id" placeholder="e.g. daniel" required>
+
+    <div class="row">
+      <div>
+        <label for="origin">From (IATA code)</label>
+        <input type="text" id="origin" name="origin" placeholder="e.g. IAD" maxlength="3" style="text-transform:uppercase" required>
+      </div>
+      <div>
+        <label for="destination">To (IATA code)</label>
+        <input type="text" id="destination" name="destination" placeholder="e.g. SEA" maxlength="3" style="text-transform:uppercase" required>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="date">Travel date</label>
+        <input type="date" id="date" name="date" required>
+      </div>
+      <div>
+        <label for="threshold">Price threshold (USD)</label>
+        <input type="number" id="threshold" name="threshold" placeholder="e.g. 250" min="1" step="0.01" required>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="seat">Cabin class</label>
+        <select id="seat" name="seat">
+          <option value="economy">Economy</option>
+          <option value="premium-economy">Premium Economy</option>
+          <option value="business">Business</option>
+          <option value="first">First</option>
+        </select>
+      </div>
+      <div>
+        <label for="adults">Passengers (adults)</label>
+        <input type="number" id="adults" name="adults" value="1" min="1" max="9">
+      </div>
+    </div>
+
+    <label for="contact">Alert contact (email or phone with country code)</label>
+    <input type="text" id="contact" name="contact" placeholder="e.g. you@email.com or +12025550123" required>
+
+    <button type="submit">Start monitoring</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}My Routes — Flight Tracker{% endblock %}
+
+{% block content %}
+<h1>My Monitored Routes</h1>
+
+{% if not user_id %}
+  <div class="card">
+    <h2>Look up your routes</h2>
+    <form action="/lookup" method="POST">
+      <label for="user_id">Your name or ID</label>
+      <input type="text" id="user_id" name="user_id" placeholder="e.g. daniel" required>
+      <button type="submit">View routes</button>
+    </form>
+  </div>
+
+{% elif requests %}
+  <p style="margin-bottom:1.2rem; color:#555; font-size:.9rem;">
+    Showing active routes for <strong>{{ user_id }}</strong>.
+    Alerts fire when the cheapest flight drops below your threshold.
+  </p>
+
+  <div class="card" style="padding: 0; overflow: hidden;">
+    <table>
+      <thead>
+        <tr>
+          <th>Route</th>
+          <th>Date</th>
+          <th>Threshold</th>
+          <th>Class</th>
+          <th>Contact</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in requests %}
+        <tr>
+          <td><strong>{{ r.origin }} → {{ r.destination }}</strong></td>
+          <td>{{ r.travel_date }}</td>
+          <td>${{ "%.2f"|format(r.threshold) }}</td>
+          <td>
+            <span class="badge badge-{{ r.seat }}">{{ r.seat }}</span>
+          </td>
+          <td style="color:#666; font-size:.85rem;">{{ r.contact }}</td>
+          <td>
+            <form action="/cancel" method="POST" style="margin:0">
+              <input type="hidden" name="user_id"    value="{{ r.user_id }}">
+              <input type="hidden" name="request_id" value="{{ r.id }}">
+              <button type="submit" class="btn btn-danger btn-sm"
+                onclick="return confirm('Cancel monitoring {{ r.origin }} → {{ r.destination }}?')">
+                Cancel
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <a href="/" class="btn">Monitor another route</a>
+
+{% else %}
+  <div class="card">
+    <p style="color:#666;">No active monitoring requests found for <strong>{{ user_id }}</strong>.</p>
+    <br>
+    <a href="/" class="btn">Monitor a route</a>
+  </div>
+{% endif %}
+{% endblock %}
