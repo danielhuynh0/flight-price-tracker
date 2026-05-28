@@ -61,22 +61,22 @@ def deliver(body: dict) -> None:
     contact = body["contact"]
     if contact.startswith("+"):
         _send_sms(contact, body)
-        print(f"[C] SMS sent to {contact}")
+        print(f"[Notification Service] SMS sent to {contact}")
     elif "@" in contact:
         _send_email(contact, body)
-        print(f"[C] Email sent to {contact}")
+        print(f"[Notification Service] Email sent to {contact}")
     else:
         raise ValueError(f"Unrecognised contact format: {contact!r}")
 
 def process_message(body: dict) -> None:
     print(
-        f"[C] {body['origin']}  to  {body['destination']} on {body['date']} | "
+        f"[Notification Service] {body['origin']}  to  {body['destination']} on {body['date']} | "
         f"{body['airline']} ${body['price']:.2f}  to  {body['contact']}"
     )
     deliver(body)
 
 def run_loop() -> None:
-    print("[C] Notification service started (long-polling Notification Queue). Press Ctrl+C to stop.")
+    print("[Notification Service] Notification service started (long-polling Notification Queue). Press Ctrl+C to stop.")
     while True:
         try:
             messages = sqs_client.consume(config.NOTIFICATION_QUEUE_URL)
@@ -85,14 +85,14 @@ def run_loop() -> None:
                     body = json.loads(msg["Body"])
                     process_message(body)
                 except Exception as e:
-                    print(f"[C] Failed to deliver notification: {e}")
+                    print(f"[Notification Service] Failed to deliver notification: {e}")
                 finally:
                     sqs_client.delete(config.NOTIFICATION_QUEUE_URL, msg["ReceiptHandle"])
         except KeyboardInterrupt:
-            print("\n[C] Stopped.")
+            print("\n[Notification Service] Stopped.")
             break
         except Exception as e:
-            print(f"[C] Unexpected error: {e}")
+            print(f"[Notification Service] Unexpected error: {e}")
             time.sleep(5)
 
 
