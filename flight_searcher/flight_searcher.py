@@ -3,7 +3,7 @@ import time
 import config
 import database as db
 import sqs_client
-from flight_searcher.flight_scraper import FlightResult, search_flights
+from .flight_scraper import FlightResult, search_flights
 
 def _make_route_key(user_id: str, origin: str, destination: str, date: str) -> str:
     return f"{user_id}:{origin}:{destination}:{date}"
