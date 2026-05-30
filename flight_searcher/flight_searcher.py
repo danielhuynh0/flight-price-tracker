@@ -62,6 +62,7 @@ def run_once() -> None:
             scrape_and_publish(request)
         except Exception as e:
             print(f"[Flight Searcher] Error on request {request.id} ({request.origin} to {request.destination}): {e}")
+        time.sleep(10)
 
 def run_loop(interval_seconds: int = config.POLL_INTERVAL_SECONDS) -> None:
     print(f"[Flight Searcher] Ingestion service started (interval: {interval_seconds}s).")
