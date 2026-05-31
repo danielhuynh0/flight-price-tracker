@@ -5,6 +5,11 @@ from datetime import datetime
 
 from fast_flights import FlightData, Passengers, get_flights
 
+import config
+
+# { cache_key: (stored_at_float, list[FlightResult]) }
+_cache: dict[str, tuple[float, list]] = {}
+
 # for use to access data from list of obtained flights
 @dataclass
 class FlightResult:
@@ -33,6 +38,21 @@ def search_flights(
     adults: int = 1,
     seat: str = "economy", # economy| premium-economy | business | first
 ) -> list[FlightResult]:
+    cache_key = f"{origin.upper()}:{destination.upper()}:{date}:{adults}:{seat}"
+    now = time.time()
+    ttl = config.FLIGHT_CACHE_TTL_SECONDS
+
+    cached = _cache.get(cache_key)
+    if cached is not None:
+        stored_at, flights = cached
+        age = now - stored_at
+        if age < ttl:
+            print(f"[Cache HIT]  {cache_key} (age {age:.0f}s, ttl {ttl}s, {len(flights)} flights)")
+            return flights
+        print(f"[Cache MISS] {cache_key} (expired, age {age:.0f}s)")
+    else:
+        print(f"[Cache MISS] {cache_key} (not cached)")
+
     result = get_flights(
         flight_data=[
             FlightData(
@@ -60,6 +80,9 @@ def search_flights(
             price=parse_price(f.price),
             is_best=f.is_best,
         ))
+
+    _cache[cache_key] = (now, flights)
+    print(f"[Cache SET]  {cache_key} ({len(flights)} flights, ttl {ttl}s)")
     return flights
 
 # a fancy way of formatting the output

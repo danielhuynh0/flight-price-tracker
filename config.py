@@ -11,7 +11,8 @@ PRICE_EVENTS_QUEUE_URL  = os.getenv("PRICE_EVENTS_QUEUE_URL", "")
 NOTIFICATION_QUEUE_URL  = os.getenv("NOTIFICATION_QUEUE_URL", "")
 
 AWS_REGION              = os.getenv("AWS_REGION", "us-east-1")
-POLL_INTERVAL_SECONDS   = int(os.getenv("POLL_INTERVAL_SECONDS", "300"))
+POLL_INTERVAL_SECONDS    = int(os.getenv("POLL_INTERVAL_SECONDS",    "300"))
+FLIGHT_CACHE_TTL_SECONDS = int(os.getenv("FLIGHT_CACHE_TTL_SECONDS", "270"))
 
 # DynamoDB table names
 DYNAMO_MONITORING_TABLE     = os.getenv("DYNAMO_MONITORING_TABLE",    "monitoring_requests")
