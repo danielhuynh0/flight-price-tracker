@@ -1,0 +1,99 @@
+name: Build & Deploy to EKS
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+  EKS_CLUSTER: ${{ secrets.EKS_CLUSTER_NAME }}
+
+jobs:
+  build-and-push:
+    name: Build Docker images & push to ECR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push frontend
+        run: |
+          docker build -f frontend/Dockerfile -t $ECR_REGISTRY/flight-tracker-frontend:${{ github.sha }} -t $ECR_REGISTRY/flight-tracker-frontend:latest .
+          docker push $ECR_REGISTRY/flight-tracker-frontend --all-tags
+
+      - name: Build & push flight-searcher
+        run: |
+          docker build -f flight_searcher/Dockerfile -t $ECR_REGISTRY/flight-tracker-flight-searcher:${{ github.sha }} -t $ECR_REGISTRY/flight-tracker-flight-searcher:latest .
+          docker push $ECR_REGISTRY/flight-tracker-flight-searcher --all-tags
+
+      - name: Build & push price-analyzer
+        run: |
+          docker build -f price_analyzer/Dockerfile -t $ECR_REGISTRY/flight-tracker-price-analyzer:${{ github.sha }} -t $ECR_REGISTRY/flight-tracker-price-analyzer:latest .
+          docker push $ECR_REGISTRY/flight-tracker-price-analyzer --all-tags
+
+      - name: Build & push notif-sender
+        run: |
+          docker build -f notif_sender/Dockerfile -t $ECR_REGISTRY/flight-tracker-notif-sender:${{ github.sha }} -t $ECR_REGISTRY/flight-tracker-notif-sender:latest .
+          docker push $ECR_REGISTRY/flight-tracker-notif-sender --all-tags
+
+  deploy:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig for EKS
+        run: aws eks update-kubeconfig --name $EKS_CLUSTER --region $AWS_REGION
+
+      - name: Substitute image tags in manifests
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          sed -i "s|IMAGE_PLACEHOLDER_FRONTEND|$ECR_REGISTRY/flight-tracker-frontend:$IMAGE_TAG|g" k8s/frontend.yaml
+          sed -i "s|IMAGE_PLACEHOLDER_FLIGHT_SEARCHER|$ECR_REGISTRY/flight-tracker-flight-searcher:$IMAGE_TAG|g" k8s/flight-searcher.yaml
+          sed -i "s|IMAGE_PLACEHOLDER_PRICE_ANALYZER|$ECR_REGISTRY/flight-tracker-price-analyzer:$IMAGE_TAG|g" k8s/price-analyzer.yaml
+          sed -i "s|IMAGE_PLACEHOLDER_NOTIF_SENDER|$ECR_REGISTRY/flight-tracker-notif-sender:$IMAGE_TAG|g" k8s/notif-sender.yaml
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secret.yaml
+          kubectl apply -f k8s/frontend.yaml
+          kubectl apply -f k8s/flight-searcher.yaml
+          kubectl apply -f k8s/price-analyzer.yaml
+          kubectl apply -f k8s/notif-sender.yaml
+
+      - name: Verify rollout
+        run: |
+          kubectl rollout status deployment/frontend -n flight-tracker --timeout=120s
+          kubectl rollout status deployment/flight-searcher -n flight-tracker --timeout=120s
+          kubectl rollout status deployment/price-analyzer -n flight-tracker --timeout=120s
+          kubectl rollout status deployment/notif-sender -n flight-tracker --timeout=120s
+
+      - name: Show deployment status
+        run: |
+          kubectl get pods -n flight-tracker
+          kubectl get svc -n flight-tracker

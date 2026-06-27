@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: price-analyzer
+  namespace: flight-tracker
+  labels:
+    app: price-analyzer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: price-analyzer
+  template:
+    metadata:
+      labels:
+        app: price-analyzer
+    spec:
+      containers:
+        - name: price-analyzer
+          image: IMAGE_PLACEHOLDER_PRICE_ANALYZER
+          envFrom:
+            - configMapRef:
+                name: flight-tracker-config
+            - secretRef:
+                name: flight-tracker-secrets

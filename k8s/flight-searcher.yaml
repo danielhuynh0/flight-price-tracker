@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flight-searcher
+  namespace: flight-tracker
+  labels:
+    app: flight-searcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flight-searcher
+  template:
+    metadata:
+      labels:
+        app: flight-searcher
+    spec:
+      containers:
+        - name: flight-searcher
+          image: IMAGE_PLACEHOLDER_FLIGHT_SEARCHER
+          envFrom:
+            - configMapRef:
+                name: flight-tracker-config
+            - secretRef:
+                name: flight-tracker-secrets

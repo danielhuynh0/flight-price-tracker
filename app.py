@@ -1,10 +1,15 @@
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
 
 import config
 import database as db
 
 app = Flask(__name__)
 app.secret_key = config.FLASK_SECRET_KEY
+
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "healthy"}), 200
 
 
 # ---------------------------------------------------------------------------

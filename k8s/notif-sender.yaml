@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notif-sender
+  namespace: flight-tracker
+  labels:
+    app: notif-sender
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notif-sender
+  template:
+    metadata:
+      labels:
+        app: notif-sender
+    spec:
+      containers:
+        - name: notif-sender
+          image: IMAGE_PLACEHOLDER_NOTIF_SENDER
+          envFrom:
+            - configMapRef:
+                name: flight-tracker-config
+            - secretRef:
+                name: flight-tracker-secrets
