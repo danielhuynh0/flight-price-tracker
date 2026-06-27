@@ -80,7 +80,6 @@ jobs:
         run: |
           kubectl apply -f k8s/namespace.yaml
           kubectl apply -f k8s/configmap.yaml
-          kubectl apply -f k8s/secret.yaml
           kubectl apply -f k8s/frontend.yaml
           kubectl apply -f k8s/flight-searcher.yaml
           kubectl apply -f k8s/price-analyzer.yaml

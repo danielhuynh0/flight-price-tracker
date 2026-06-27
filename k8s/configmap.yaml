@@ -14,6 +14,5 @@ data:
   FLASK_PORT: "5000"
   SMTP_HOST: "smtp.gmail.com"
   SMTP_PORT: "465"
-  # *** UPDATE THESE with your actual SQS queue URLs ***
-  PRICE_EVENTS_QUEUE_URL: "https://sqs.us-east-1.amazonaws.com/YOUR_ACCOUNT_ID/price-events"
-  NOTIFICATION_QUEUE_URL: "https://sqs.us-east-1.amazonaws.com/YOUR_ACCOUNT_ID/notifications"
+  PRICE_EVENTS_QUEUE_URL: "https://sqs.us-east-1.amazonaws.com/627330319786/flight-tracker-price-events"
+  NOTIFICATION_QUEUE_URL: "https://sqs.us-east-1.amazonaws.com/627330319786/flight-tracker-notifications"
