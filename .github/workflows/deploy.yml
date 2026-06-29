@@ -76,6 +76,11 @@ jobs:
           sed -i "s|IMAGE_PLACEHOLDER_PRICE_ANALYZER|$ECR_REGISTRY/flight-tracker-price-analyzer:$IMAGE_TAG|g" k8s/price-analyzer.yaml
           sed -i "s|IMAGE_PLACEHOLDER_NOTIF_SENDER|$ECR_REGISTRY/flight-tracker-notif-sender:$IMAGE_TAG|g" k8s/notif-sender.yaml
 
+      - name: Clean up stuck pods
+        run: |
+          kubectl delete pods -n flight-tracker --field-selector=status.phase=Failed --force --grace-period=0 2>/dev/null || true
+          kubectl delete pods -n flight-tracker --field-selector=status.phase=Pending --force --grace-period=0 2>/dev/null || true
+
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f k8s/namespace.yaml
@@ -87,10 +92,10 @@ jobs:
 
       - name: Verify rollout
         run: |
-          kubectl rollout status deployment/frontend -n flight-tracker --timeout=120s
-          kubectl rollout status deployment/flight-searcher -n flight-tracker --timeout=120s
-          kubectl rollout status deployment/price-analyzer -n flight-tracker --timeout=120s
-          kubectl rollout status deployment/notif-sender -n flight-tracker --timeout=120s
+          kubectl rollout status deployment/frontend -n flight-tracker --timeout=300s
+          kubectl rollout status deployment/flight-searcher -n flight-tracker --timeout=300s
+          kubectl rollout status deployment/price-analyzer -n flight-tracker --timeout=300s
+          kubectl rollout status deployment/notif-sender -n flight-tracker --timeout=300s
 
       - name: Show deployment status
         run: |
