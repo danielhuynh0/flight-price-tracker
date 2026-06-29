@@ -68,17 +68,26 @@ def search_flights(
     result = get_flights(query)
 
     flights = []
-    for f in getattr(result, "flights", []):
+    for i, f in enumerate(result):
+        legs = f.flights or []
+        stops = max(len(legs) - 1, 0)
+        airline = ", ".join(f.airlines) if f.airlines else "Unknown"
+        first_leg = legs[0] if legs else None
+        last_leg = legs[-1] if legs else None
+        dep_str = f"{first_leg.departure.date} {first_leg.departure.time}" if first_leg else ""
+        arr_str = f"{last_leg.arrival.date} {last_leg.arrival.time}" if last_leg else ""
+        total_duration = sum(leg.duration for leg in legs) if legs else 0
+
         flights.append(FlightResult(
-            airline=f.name,
+            airline=airline,
             dep_airport=origin.upper(),
             arrival_airport=destination.upper(),
-            departure=f.departure,
-            arrival=f.arrival,
-            duration=f.duration,
-            stops=f.stops,
+            departure=dep_str,
+            arrival=arr_str,
+            duration=f"{total_duration // 60}h {total_duration % 60}m",
+            stops=stops,
             price=parse_price(f.price),
-            is_best=f.is_best,
+            is_best=(i == 0),
         ))
 
     _cache[cache_key] = (now, flights)
