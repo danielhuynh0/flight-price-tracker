@@ -4,6 +4,7 @@ metadata:
   name: flight-tracker-config
   namespace: flight-tracker
 data:
+  PYTHONUNBUFFERED: "1"
   AWS_REGION: "us-east-1"
   POLL_INTERVAL_SECONDS: "300"
   FLIGHT_CACHE_TTL_SECONDS: "270"
