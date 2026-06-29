@@ -3,7 +3,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 
-from fast_flights import FlightData, Passengers, get_flights
+from fast_flights import FlightQuery, Passengers, create_query, get_flights
 
 import config
 
@@ -53,9 +53,9 @@ def search_flights(
     else:
         print(f"[Cache MISS] {cache_key} (not cached)")
 
-    result = get_flights(
-        flight_data=[
-            FlightData(
+    query = create_query(
+        flights=[
+            FlightQuery(
                 date=date,
                 from_airport=origin.upper(),
                 to_airport=destination.upper(),
@@ -64,8 +64,8 @@ def search_flights(
         trip="one-way",
         seat=seat,
         passengers=Passengers(adults=adults),
-        fetch_mode="fallback",
     )
+    result = get_flights(query)
 
     flights = []
     for f in getattr(result, "flights", []):
