@@ -1,0 +1,155 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Flight Price Tracker - Gen 3 Serverless
+
+Parameters:
+  SmtpUser:
+    Type: String
+  SmtpPassword:
+    Type: String
+    NoEcho: true
+  SmtpFrom:
+    Type: String
+  FlaskSecretKey:
+    Type: String
+    NoEcho: true
+  FlightSearcherImageUri:
+    Type: String
+    Description: ECR image URI for the flight-searcher Lambda
+  PriceEventsQueueUrl:
+    Type: String
+  NotificationQueueUrl:
+    Type: String
+  PriceEventsQueueArn:
+    Type: String
+  NotificationQueueArn:
+    Type: String
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 30
+    MemorySize: 256
+    Environment:
+      Variables:
+        DYNAMO_MONITORING_TABLE: monitoring_requests
+        DYNAMO_PRICE_HISTORY_TABLE: price_history
+        DYNAMO_NOTIFICATION_TABLE: notification_history
+        PRICE_EVENTS_QUEUE_URL: !Ref PriceEventsQueueUrl
+        NOTIFICATION_QUEUE_URL: !Ref NotificationQueueUrl
+        SMTP_HOST: smtp.gmail.com
+        SMTP_PORT: "465"
+        SMTP_USER: !Ref SmtpUser
+        SMTP_PASSWORD: !Ref SmtpPassword
+        SMTP_FROM: !Ref SmtpFrom
+        FLASK_SECRET_KEY: !Ref FlaskSecretKey
+        NOTIFICATION_COOLDOWN_HOURS: "24"
+        FLIGHT_CACHE_TTL_SECONDS: "270"
+        POLL_INTERVAL_SECONDS: "300"
+
+Resources:
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: flight-tracker-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+        - arn:aws:iam::aws:policy/AmazonSNSFullAccess
+        - arn:aws:iam::aws:policy/AWSLambda_FullAccess
+
+  FlightApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: flight-tracker-api
+      CodeUri: lambda/flight_api/
+      Handler: handler.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Events:
+        ApiRoot:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: ANY
+            ApiId: !Ref FlightHttpApi
+        ApiProxy:
+          Type: HttpApi
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            ApiId: !Ref FlightHttpApi
+
+  FlightHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowMethods:
+          - GET
+          - POST
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+
+  FlightSearcherFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: flight-tracker-searcher
+      PackageType: Image
+      ImageUri: !Ref FlightSearcherImageUri
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 600
+      MemorySize: 512
+      Events:
+        ScheduleEvent:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
+            Name: flight-tracker-search-schedule
+            Enabled: true
+
+  PriceAnalyzerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: flight-tracker-price-analyzer
+      CodeUri: lambda/price_analyzer/
+      Handler: handler.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 60
+      Events:
+        SqsEvent:
+          Type: SQS
+          Properties:
+            Queue: !Ref PriceEventsQueueArn
+            BatchSize: 10
+
+  NotifSenderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: flight-tracker-notif-sender
+      CodeUri: lambda/notif_sender/
+      Handler: handler.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Events:
+        SqsEvent:
+          Type: SQS
+          Properties:
+            Queue: !Ref NotificationQueueArn
+            BatchSize: 5
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${FlightHttpApi}.execute-api.${AWS::Region}.amazonaws.com"

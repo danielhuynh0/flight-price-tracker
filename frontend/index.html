@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flight Price Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f4f6f9; color: #1a1a2e; min-height: 100vh; }
+    nav { background: #1a1a2e; padding: 0 2rem; display: flex; align-items: center; gap: 2rem; height: 56px; }
+    nav .brand { color: #fff; font-weight: 700; font-size: 1.1rem; text-decoration: none; }
+    nav a { color: #aab4c8; text-decoration: none; font-size: 0.9rem; }
+    nav a:hover { color: #fff; }
+    .container { max-width: 780px; margin: 2.5rem auto; padding: 0 1.5rem; }
+    h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.4rem; }
+    h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.2rem; color: #444; }
+    .card { background: #fff; border-radius: 10px; padding: 2rem; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 1.5rem; }
+    .flash { padding: .75rem 1rem; border-radius: 6px; margin-bottom: 1.2rem; font-size: .9rem; }
+    .flash.success { background: #d4edda; color: #155724; }
+    .flash.error { background: #f8d7da; color: #721c24; }
+    label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: .3rem; color: #555; }
+    input[type=text], input[type=number], input[type=date], input[type=email], select {
+      width: 100%; padding: .55rem .75rem; border: 1px solid #d0d7e2; border-radius: 6px;
+      font-size: .95rem; background: #fafbfc; margin-bottom: 1rem; transition: border-color .15s;
+    }
+    input:focus, select:focus { outline: none; border-color: #4a6cf7; background: #fff; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    button, .btn {
+      display: inline-block; padding: .6rem 1.4rem; background: #4a6cf7; color: #fff;
+      border: none; border-radius: 6px; font-size: .95rem; font-weight: 600;
+      cursor: pointer; text-decoration: none; transition: background .15s;
+    }
+    button:hover, .btn:hover { background: #3a5ce5; }
+    button:disabled { background: #aab4c8; cursor: not-allowed; }
+    .btn-secondary { background: #6c757d; }
+    .btn-secondary:hover { background: #545b62; }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    th { text-align: left; padding: .6rem .8rem; border-bottom: 2px solid #e8ecf0; color: #666; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+    td { padding: .7rem .8rem; border-bottom: 1px solid #f0f2f5; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: .2rem .6rem; border-radius: 99px; font-size: .75rem; font-weight: 600; }
+    .badge-best { background: #d4edda; color: #155724; }
+    .loading { color: #666; font-style: italic; padding: 1rem 0; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="brand">✈ Flight Tracker</a>
+    <a href="index.html">Search & Monitor</a>
+    <a href="routes.html">My Routes</a>
+  </nav>
+
+  <div class="container">
+    <div id="flash"></div>
+
+    <h1>Search Flights</h1>
+    <h2>Check current prices instantly.</h2>
+
+    <div class="card">
+      <form id="search-form">
+        <div class="row">
+          <div>
+            <label>From (IATA code)</label>
+            <input type="text" id="s-origin" placeholder="e.g. IAD" maxlength="3" style="text-transform:uppercase" required>
+          </div>
+          <div>
+            <label>To (IATA code)</label>
+            <input type="text" id="s-destination" placeholder="e.g. SEA" maxlength="3" style="text-transform:uppercase" required>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Travel date</label>
+            <input type="date" id="s-date" required>
+          </div>
+          <div>
+            <label>Cabin class</label>
+            <select id="s-seat">
+              <option value="economy">Economy</option>
+              <option value="premium-economy">Premium Economy</option>
+              <option value="business">Business</option>
+              <option value="first">First</option>
+            </select>
+          </div>
+        </div>
+        <label>Passengers (adults)</label>
+        <input type="number" id="s-adults" value="1" min="1" max="9" style="width:100px; margin-bottom:1rem;">
+        <br>
+        <button type="submit" id="search-btn">Search flights</button>
+      </form>
+    </div>
+
+    <div id="search-results" style="display:none;">
+      <div class="card" style="padding:0; overflow:hidden;">
+        <table>
+          <thead>
+            <tr>
+              <th>Airline</th>
+              <th>Departure</th>
+              <th>Arrival</th>
+              <th>Duration</th>
+              <th>Stops</th>
+              <th>Price</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <h1 style="margin-top:2rem;">Monitor a Route</h1>
+    <h2>Get alerted when the price drops below your threshold.</h2>
+
+    <div class="card">
+      <form id="monitor-form">
+        <label>Your name or ID</label>
+        <input type="text" id="m-user-id" placeholder="e.g. daniel" required>
+        <div class="row">
+          <div>
+            <label>From (IATA code)</label>
+            <input type="text" id="m-origin" placeholder="e.g. IAD" maxlength="3" style="text-transform:uppercase" required>
+          </div>
+          <div>
+            <label>To (IATA code)</label>
+            <input type="text" id="m-destination" placeholder="e.g. SEA" maxlength="3" style="text-transform:uppercase" required>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Travel date</label>
+            <input type="date" id="m-date" required>
+          </div>
+          <div>
+            <label>Price threshold (USD)</label>
+            <input type="number" id="m-threshold" placeholder="e.g. 250" min="1" step="0.01" required>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Cabin class</label>
+            <select id="m-seat">
+              <option value="economy">Economy</option>
+              <option value="premium-economy">Premium Economy</option>
+              <option value="business">Business</option>
+              <option value="first">First</option>
+            </select>
+          </div>
+          <div>
+            <label>Passengers (adults)</label>
+            <input type="number" id="m-adults" value="1" min="1" max="9">
+          </div>
+        </div>
+        <label>Alert contact (email or phone with country code)</label>
+        <input type="text" id="m-contact" placeholder="e.g. you@email.com or +12025550123" required>
+        <button type="submit">Start monitoring</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    var API_URL = "__API_URL__";
+
+    function showFlash(msg, type) {
+      var el = document.getElementById("flash");
+      el.innerHTML = '<div class="flash ' + type + '">' + msg + '</div>';
+      setTimeout(function() { el.innerHTML = ""; }, 5000);
+    }
+
+    document.getElementById("search-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      var btn = document.getElementById("search-btn");
+      btn.disabled = true;
+      btn.textContent = "Searching...";
+      document.getElementById("search-results").style.display = "none";
+
+      fetch(API_URL + "/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          origin: document.getElementById("s-origin").value.toUpperCase(),
+          destination: document.getElementById("s-destination").value.toUpperCase(),
+          date: document.getElementById("s-date").value,
+          adults: parseInt(document.getElementById("s-adults").value),
+          seat: document.getElementById("s-seat").value,
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        btn.disabled = false;
+        btn.textContent = "Search flights";
+        if (data.error) { showFlash(data.error, "error"); return; }
+        var flights = data.flights || [];
+        if (!flights.length) { showFlash("No flights found. Try a different route or date.", "error"); return; }
+        var tbody = document.getElementById("results-body");
+        tbody.innerHTML = "";
+        flights.forEach(function(f) {
+          var row = document.createElement("tr");
+          row.innerHTML =
+            "<td>" + f.airline + (f.is_best ? ' <span class="badge badge-best">Best</span>' : "") + "</td>" +
+            "<td>" + (f.departure || "-") + "</td>" +
+            "<td>" + (f.arrival || "-") + "</td>" +
+            "<td>" + (f.duration || "-") + "</td>" +
+            "<td>" + (f.stops === 0 ? "Nonstop" : f.stops + " stop(s)") + "</td>" +
+            "<td><strong>$" + (f.price ? f.price.toFixed(2) : "-") + "</strong></td>";
+          tbody.appendChild(row);
+        });
+        document.getElementById("search-results").style.display = "block";
+      })
+      .catch(function(err) {
+        btn.disabled = false;
+        btn.textContent = "Search flights";
+        showFlash("Search failed: " + err.message, "error");
+      });
+    });
+
+    document.getElementById("monitor-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      fetch(API_URL + "/monitors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: document.getElementById("m-user-id").value.trim(),
+          origin: document.getElementById("m-origin").value.toUpperCase(),
+          destination: document.getElementById("m-destination").value.toUpperCase(),
+          date: document.getElementById("m-date").value,
+          threshold: parseFloat(document.getElementById("m-threshold").value),
+          contact: document.getElementById("m-contact").value.trim(),
+          seat: document.getElementById("m-seat").value,
+          adults: parseInt(document.getElementById("m-adults").value),
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.error) { showFlash(data.error, "error"); return; }
+        showFlash("Monitoring started! View your routes on the My Routes page.", "success");
+        document.getElementById("monitor-form").reset();
+      })
+      .catch(function(err) { showFlash("Failed to create monitor: " + err.message, "error"); });
+    });
+  </script>
+</body>
+</html>

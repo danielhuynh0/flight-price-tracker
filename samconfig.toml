@@ -1,0 +1,8 @@
+version = 0.1
+
+[default.global.parameters]
+stack_name = "flight-tracker-gen3"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
+resolve_s3 = true
+confirm_changeset = false

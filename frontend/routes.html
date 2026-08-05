@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Routes — Flight Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f4f6f9; color: #1a1a2e; min-height: 100vh; }
+    nav { background: #1a1a2e; padding: 0 2rem; display: flex; align-items: center; gap: 2rem; height: 56px; }
+    nav .brand { color: #fff; font-weight: 700; font-size: 1.1rem; text-decoration: none; }
+    nav a { color: #aab4c8; text-decoration: none; font-size: 0.9rem; }
+    nav a:hover { color: #fff; }
+    .container { max-width: 780px; margin: 2.5rem auto; padding: 0 1.5rem; }
+    h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.4rem; }
+    h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.2rem; color: #444; }
+    .card { background: #fff; border-radius: 10px; padding: 2rem; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 1.5rem; }
+    .flash { padding: .75rem 1rem; border-radius: 6px; margin-bottom: 1.2rem; font-size: .9rem; }
+    .flash.success { background: #d4edda; color: #155724; }
+    .flash.error { background: #f8d7da; color: #721c24; }
+    label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: .3rem; color: #555; }
+    input[type=text] { width: 100%; padding: .55rem .75rem; border: 1px solid #d0d7e2; border-radius: 6px; font-size: .95rem; background: #fafbfc; margin-bottom: 1rem; }
+    input:focus { outline: none; border-color: #4a6cf7; background: #fff; }
+    button, .btn {
+      display: inline-block; padding: .6rem 1.4rem; background: #4a6cf7; color: #fff;
+      border: none; border-radius: 6px; font-size: .95rem; font-weight: 600;
+      cursor: pointer; text-decoration: none; transition: background .15s;
+    }
+    button:hover, .btn:hover { background: #3a5ce5; }
+    .btn-danger { background: #e53e3e; }
+    .btn-danger:hover { background: #c53030; }
+    .btn-sm { padding: .35rem .9rem; font-size: .82rem; }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    th { text-align: left; padding: .6rem .8rem; border-bottom: 2px solid #e8ecf0; color: #666; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+    td { padding: .7rem .8rem; border-bottom: 1px solid #f0f2f5; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: .2rem .6rem; border-radius: 99px; font-size: .75rem; font-weight: 600; }
+    .badge-economy { background: #e8f4fd; color: #1a6fa3; }
+    .badge-business { background: #fdf3e8; color: #a36e1a; }
+    .badge-first { background: #f0e8fd; color: #6e1aa3; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="brand">✈ Flight Tracker</a>
+    <a href="index.html">Search & Monitor</a>
+    <a href="routes.html">My Routes</a>
+  </nav>
+
+  <div class="container">
+    <div id="flash"></div>
+    <h1>My Monitored Routes</h1>
+
+    <div class="card" id="lookup-card">
+      <h2>Look up your routes</h2>
+      <label>Your name or ID</label>
+      <input type="text" id="user-id-input" placeholder="e.g. daniel">
+      <button onclick="loadRoutes()">View routes</button>
+    </div>
+
+    <div id="routes-section" style="display:none;">
+      <p id="routes-subtitle" style="margin-bottom:1.2rem; color:#555; font-size:.9rem;"></p>
+      <div class="card" style="padding:0; overflow:hidden;">
+        <table>
+          <thead>
+            <tr>
+              <th>Route</th>
+              <th>Date</th>
+              <th>Threshold</th>
+              <th>Class</th>
+              <th>Contact</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="routes-body"></tbody>
+        </table>
+      </div>
+      <a href="index.html" class="btn" style="margin-top:.5rem;">Monitor another route</a>
+    </div>
+
+    <div id="empty-section" style="display:none;">
+      <div class="card">
+        <p style="color:#666;" id="empty-msg"></p>
+        <br>
+        <a href="index.html" class="btn">Monitor a route</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var API_URL = "__API_URL__";
+
+    function showFlash(msg, type) {
+      var el = document.getElementById("flash");
+      el.innerHTML = '<div class="flash ' + type + '">' + msg + '</div>';
+      setTimeout(function() { el.innerHTML = ""; }, 5000);
+    }
+
+    function loadRoutes() {
+      var userId = document.getElementById("user-id-input").value.trim();
+      if (!userId) { showFlash("Please enter your name or ID.", "error"); return; }
+
+      fetch(API_URL + "/monitors/" + encodeURIComponent(userId))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.error) { showFlash(data.error, "error"); return; }
+          var monitors = data.monitors || [];
+          document.getElementById("routes-section").style.display = "none";
+          document.getElementById("empty-section").style.display = "none";
+
+          if (!monitors.length) {
+            document.getElementById("empty-msg").textContent = "No active monitoring requests found for " + userId + ".";
+            document.getElementById("empty-section").style.display = "block";
+            return;
+          }
+
+          document.getElementById("routes-subtitle").textContent =
+            "Showing active routes for " + userId + ". Alerts fire when the cheapest flight drops below your threshold.";
+
+          var tbody = document.getElementById("routes-body");
+          tbody.innerHTML = "";
+          monitors.forEach(function(r) {
+            var row = document.createElement("tr");
+            row.id = "row-" + r.id;
+            row.innerHTML =
+              "<td><strong>" + r.origin + " → " + r.destination + "</strong></td>" +
+              "<td>" + r.travel_date + "</td>" +
+              "<td>$" + r.threshold.toFixed(2) + "</td>" +
+              '<td><span class="badge badge-' + r.seat + '">' + r.seat + "</span></td>" +
+              '<td style="color:#666;font-size:.85rem;">' + r.contact + "</td>" +
+              '<td><button class="btn btn-danger btn-sm" onclick="cancelRoute(\'' + r.user_id + "','" + r.id + '\')">Cancel</button></td>';
+            tbody.appendChild(row);
+          });
+          document.getElementById("routes-section").style.display = "block";
+        })
+        .catch(function(err) { showFlash("Failed to load routes: " + err.message, "error"); });
+    }
+
+    function cancelRoute(userId, requestId) {
+      if (!confirm("Cancel this monitoring request?")) return;
+      fetch(API_URL + "/monitors/" + encodeURIComponent(userId) + "/" + encodeURIComponent(requestId), {
+        method: "DELETE"
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.error) { showFlash(data.error, "error"); return; }
+        var row = document.getElementById("row-" + requestId);
+        if (row) row.remove();
+        showFlash("Monitoring request cancelled.", "success");
+      })
+      .catch(function(err) { showFlash("Failed to cancel: " + err.message, "error"); });
+    }
+
+    var params = new URLSearchParams(window.location.search);
+    if (params.get("user_id")) {
+      document.getElementById("user-id-input").value = params.get("user_id");
+      loadRoutes();
+    }
+  </script>
+</body>
+</html>
