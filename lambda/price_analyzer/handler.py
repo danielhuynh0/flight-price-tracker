@@ -41,14 +41,14 @@ def process_message(body: dict) -> None:
             return
 
     notification = {
-        "user_id":     user_id,
-        "origin":      origin,
+        "user_id": user_id,
+        "origin": origin,
         "destination": destination,
-        "date":        date,
-        "airline":     cheapest["airline"],
-        "price":       cheapest["price"],
-        "threshold":   threshold,
-        "contact":     contact,
+        "date": date,
+        "airline": cheapest["airline"],
+        "price": cheapest["price"],
+        "threshold": threshold,
+        "contact": contact,
     }
     sqs_client.publish(config.NOTIFICATION_QUEUE_URL, notification)
     db.log_notification(user_id, route_key, cheapest["price"], cheapest["airline"])

@@ -100,23 +100,27 @@ Write-Host ""
 Write-Host "--- SQS ---"
 
 Write-Host "Checking $PRICE_QUEUE..."
-aws sqs get-queue-url --queue-name $PRICE_QUEUE --region $REGION 2>&1 | Out-Null
+$priceQueueUrl = aws sqs get-queue-url --queue-name $PRICE_QUEUE --query QueueUrl --output text --region $REGION 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Creating $PRICE_QUEUE..."
     aws sqs create-queue --queue-name $PRICE_QUEUE --attributes VisibilityTimeout=600 --region $REGION | Out-Null
     if ($LASTEXITCODE -ne 0) { Write-Error "Failed to create $PRICE_QUEUE"; exit 1 }
+    $priceQueueUrl = aws sqs get-queue-url --queue-name $PRICE_QUEUE --query QueueUrl --output text --region $REGION
 } else {
-    Write-Host "$PRICE_QUEUE already exists, skipping."
+    Write-Host "$PRICE_QUEUE exists. Ensuring VisibilityTimeout=600..."
+    aws sqs set-queue-attributes --queue-url $priceQueueUrl --attributes VisibilityTimeout=600 --region $REGION | Out-Null
 }
 
 Write-Host "Checking $NOTIF_QUEUE..."
-aws sqs get-queue-url --queue-name $NOTIF_QUEUE --region $REGION 2>&1 | Out-Null
+$notifQueueUrl = aws sqs get-queue-url --queue-name $NOTIF_QUEUE --query QueueUrl --output text --region $REGION 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Creating $NOTIF_QUEUE..."
     aws sqs create-queue --queue-name $NOTIF_QUEUE --attributes VisibilityTimeout=60 --region $REGION | Out-Null
     if ($LASTEXITCODE -ne 0) { Write-Error "Failed to create $NOTIF_QUEUE"; exit 1 }
+    $notifQueueUrl = aws sqs get-queue-url --queue-name $NOTIF_QUEUE --query QueueUrl --output text --region $REGION
 } else {
-    Write-Host "$NOTIF_QUEUE already exists, skipping."
+    Write-Host "$NOTIF_QUEUE exists. Ensuring VisibilityTimeout=60..."
+    aws sqs set-queue-attributes --queue-url $notifQueueUrl --attributes VisibilityTimeout=60 --region $REGION | Out-Null
 }
 
 # S3 frontend bucket

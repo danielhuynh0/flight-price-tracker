@@ -35,6 +35,11 @@ jobs:
           docker build -t $IMAGE_URI lambda/flight_searcher/
           docker push $IMAGE_URI
 
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Set up SAM CLI
         uses: aws-actions/setup-sam@v2
 
@@ -71,6 +76,7 @@ jobs:
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
+            --image-repositories FlightSearcherFunction=$ECR_REGISTRY/$ECR_REPO \
             --parameter-overrides \
               SmtpUser=${{ secrets.SMTP_USER }} \
               SmtpPassword=${{ secrets.SMTP_PASSWORD }} \

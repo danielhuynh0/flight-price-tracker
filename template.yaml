@@ -27,7 +27,6 @@ Parameters:
 
 Globals:
   Function:
-    Runtime: python3.11
     Timeout: 30
     MemorySize: 256
     Environment:
@@ -72,6 +71,7 @@ Resources:
     Properties:
       FunctionName: flight-tracker-api
       CodeUri: lambda/flight_api/
+      Runtime: python3.11
       Handler: handler.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Events:
@@ -124,6 +124,7 @@ Resources:
     Properties:
       FunctionName: flight-tracker-price-analyzer
       CodeUri: lambda/price_analyzer/
+      Runtime: python3.11
       Handler: handler.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Timeout: 60
@@ -139,6 +140,7 @@ Resources:
     Properties:
       FunctionName: flight-tracker-notif-sender
       CodeUri: lambda/notif_sender/
+      Runtime: python3.11
       Handler: handler.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Timeout: 30
