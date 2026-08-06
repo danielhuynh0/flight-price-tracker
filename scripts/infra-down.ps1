@@ -18,14 +18,16 @@ if ($confirm -ne "yes") {
 
 # Step 1: Delete namespace to clean up load balancers
 Write-Host ""
-Write-Host "[1/4] Deleting Kubernetes namespace..." -ForegroundColor Cyan
-try {
-    aws eks update-kubeconfig --name $CLUSTER_NAME --region $REGION 2>$null
-    kubectl delete namespace flight-tracker --timeout=60s 2>$null
-    Write-Host "  Namespace deleted. Waiting 30s for load balancer cleanup..."
-    Start-Sleep -Seconds 30
-} catch {
-    Write-Host "  Skipped - cluster may not be reachable." -ForegroundColor DarkYellow
+Write-Host "[1/4] Deleting Kubernetes namespace (cleans up load balancer)..." -ForegroundColor Cyan
+
+$kubeconfigResult = aws eks update-kubeconfig --name $CLUSTER_NAME --region $REGION 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  Could not reach cluster - skipping namespace deletion." -ForegroundColor DarkYellow
+    Write-Host "  WARNING: Load balancer may need manual cleanup in EC2 console." -ForegroundColor Yellow
+} else {
+    kubectl delete namespace flight-tracker --timeout=90s 2>&1
+    Write-Host "  Namespace deleted. Waiting 60s for load balancer cleanup..."
+    Start-Sleep -Seconds 60
 }
 
 # Step 2: Delete node group

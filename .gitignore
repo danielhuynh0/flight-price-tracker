@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 *.pyo
 k8s/secret.yaml
+scripts-g3/secrets.ps1

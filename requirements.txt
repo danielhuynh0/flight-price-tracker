@@ -1,4 +1,5 @@
 fast-flights
+typing_extensions
 boto3
 python-dotenv
 flask
